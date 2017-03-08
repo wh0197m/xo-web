@@ -666,6 +666,7 @@ export default class NewVm extends BaseComponent {
     const device = String(this.getUniqueId())
 
     this._setState({ VDIs: [ ...state.VDIs, {
+      bootable: false,
       device,
       name_description: 'Created by XO',
       name_label: (state.name_label || 'disk') + '_' + device,
@@ -1120,6 +1121,7 @@ export default class NewVm extends BaseComponent {
       state: {
         configDrive,
         existingDisks,
+        template,
         VDIs
       }
     } = this.state
@@ -1196,17 +1198,19 @@ export default class NewVm extends BaseComponent {
               </span>
             </Item>
             {' '}
-            <Item className='checkbox'>
-              <label>
-                <input
-                  checked={!!vdi.bootable}
-                  onChange={this._getOnChangeCheckbox('VDIs', index, 'bootable')}
-                  type='checkbox'
-                />
-                {' '}
-                {_('newVmBootableLabel')}
-              </label>
-            </Item>
+            {template.virtualizationMode === 'pv' && isEmpty(existingDisks) &&
+              <Item className='checkbox'>
+                <label>
+                  <input
+                    checked={!!vdi.bootable}
+                    onChange={this._getOnChangeCheckbox('VDIs', index, 'bootable')}
+                    type='checkbox'
+                  />
+                  {' '}
+                  {_('newVmBootableLabel')}
+                </label>
+              </Item>
+            }
             <Item label={_('newVmNameLabel')}>
               <DebounceInput
                 className='form-control'
@@ -1253,7 +1257,10 @@ export default class NewVm extends BaseComponent {
     ) &&
     every(this.state.state.existingDisks, (vdi, index) =>
       vdi.$SR && vdi.name_label && vdi.size !== undefined
-    )
+    ) &&
+    (!isEmpty(this.state.state.existingDisks) || !every(this.state.state.VDIs, vdi =>
+      !vdi.bootable
+    ))
 
 // ADVANCED --------------------------------------------------------------------
 
